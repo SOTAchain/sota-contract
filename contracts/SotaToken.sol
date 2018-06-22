@@ -111,34 +111,6 @@ contract SotaToken is ERC20 {
     return allowed[_owner][_spender];
   }
 
-  function increaseApproval(address _spender, uint256 _addedValue)
-           public returns (bool)
-  {
-    allowed[msg.sender][_spender]
-      = allowed[msg.sender][_spender].add(_addedValue);
-
-    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    
-    return true;
-  }
-
-  function decreaseApproval(address _spender, uint256 _subtractedValue)
-           public returns (bool)
-  {
-    uint256 oldValue = allowed[msg.sender][_spender];
-
-    if(_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    }
-    else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-    }
-
-    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-
-    return true;
-  }
-
   /*
    * TODO: implement dividends
    */
