@@ -2,13 +2,6 @@ pragma solidity ^0.4.24;
 
 
 library SafeMath {
-  function sub(uint256 a, uint256 b) internal pure returns (uint256)
-  {
-    require(b <= a);
-
-    return a - b;
-  }
-
   function add(uint256 a, uint256 b) internal pure returns (uint256 c)
   {
     c = a + b;
@@ -66,7 +59,9 @@ contract SotaToken is ERC20 {
   {
     require(_value <= balances[msg.sender]);
 
-    balances[msg.sender] = balances[msg.sender].sub(_value);
+    // No overflow because of asserion
+    balances[msg.sender] = balances[msg.sender] - _value;
+
     balances[_to] = balances[_to].add(_value);
     
     emit Transfer(msg.sender, _to, _value);
@@ -84,12 +79,17 @@ contract SotaToken is ERC20 {
   function transferFrom(address _from, address _to, uint256 _value)
            public returns (bool)
   {
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
+    require(_value <= balances[_from]); // A
+    require(_value <= allowed[_from][msg.sender]); // B
 
-    balances[_from] = balances[_from].sub(_value);
+    // No overflow because of assertion A
+    balances[_from] = balances[_from] - _value;
+
     balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+
+    // No overflow becayse of assertion B
+    allowed[_from][msg.sender] = allowed[_from][msg.sender] - _value;
+
     emit Transfer(_from, _to, _value);
 
     return true;
