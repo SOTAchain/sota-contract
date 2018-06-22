@@ -1,95 +1,5 @@
 pragma solidity ^0.4.18;
 
-library itMaps
-{
-
-    /* itMapAddressUint
-         address =>  Uint
-    */
-    struct entryAddressUint
-    {
-        // Equal to the index of the key of this item in keys, plus 1.
-        uint keyIndex;
-        uint value;
-    }
-    
-    struct itMapAddressUint
-    {
-        mapping(address => entryAddressUint) data;
-        address[] keys;
-    }
-    
-    function insert(itMapAddressUint storage self, address key, uint value) internal returns (bool replaced) {
-        entryAddressUint storage e = self.data[key];
-        e.value = value;
-        
-        if (e.keyIndex > 0) {
-            return true;
-        } else {
-            e.keyIndex = ++self.keys.length;
-            self.keys[e.keyIndex - 1] = key;
-            
-            return false;
-        }
-    }
-    
-    function remove(itMapAddressUint storage self, address key) internal returns (bool success)
-    {
-        entryAddressUint storage e = self.data[key];
-        
-        if (e.keyIndex == 0) {
-            return false;
-        }
-        
-        if (e.keyIndex <= self.keys.length) {
-            // Move an existing element into the vacated key slot.
-            self.data[self.keys[self.keys.length - 1]].keyIndex = e.keyIndex;
-            self.keys[e.keyIndex - 1] = self.keys[self.keys.length - 1];
-            self.keys.length -= 1;
-            
-            delete self.data[key];
-            
-            return true;
-        }
-    }
-    
-    function destroy(itMapAddressUint storage self) internal
-    {
-        for (uint i; i < self.keys.length; i++) {
-            delete self.data[ self.keys[i]];
-        }
-        
-        delete self.keys;
-        
-        return ;
-    }
-    
-    function contains(itMapAddressUint storage self, address key) internal constant returns (bool exists)
-    {
-        return self.data[key].keyIndex > 0;
-    }
-    
-    function size(itMapAddressUint storage self) internal constant returns (uint)
-    {
-        return self.keys.length;
-    }
-    
-    function get(itMapAddressUint storage self, address key) internal constant returns (uint)
-    {
-        return self.data[key].value;
-    }
-    
-    function getKeyByIndex(itMapAddressUint storage self, uint idx) internal constant returns (address)
-    {
-        return self.keys[idx];
-    }
-    
-    function getValueByIndex(itMapAddressUint storage self, uint idx) internal constant returns (uint)
-    {
-        return self.data[self.keys[idx]].value;
-    }
-}
-
 contract ERC20
 {
     // Functions declaration
@@ -107,34 +17,37 @@ contract ERC20
 
 contract IceRockMining is ERC20
 {
-    using itMaps for itMaps.itMapAddressUint;
-
-    uint256 initialSupply = 20000000; // Total Supply
-    string public constant name = "ICE ROCK MINING"; // Token name
-    string public constant symbol = "ROCK2"; // Symbol of token
-    uint currentUSDExchangeRate = 1340;
-    uint bonus = 0;
-    uint priceUSD = 1; // Token price
-    address IceRockMiningAddress;
+    uint256 _initialSupply = 10 * 1000 * 1000 * 1000; // Total Supply
+    string public name = "ICE ROCK MINING";
+    string public symbol = "ROCK2";
+    uint8 public decimals = 3;
     
-    itMaps.itMapAddressUint balances;
-    
+    mapping(address => uint) balances;
     mapping (address => mapping (address => uint256)) allowed;
-    mapping (address => uint256) approvedDividends;
+
+    address _ownerAddress;
     
     event Burned(address indexed from, uint amount);
     event DividendsTransfered(address to, uint amount);
     
+    function IceRockMining() public
+    {
+        _ownerAddress = msg.sender;
+        
+        // No crowdsale -- give all coins to the creator
+        balances.insert(_ownerAddress, _initialSupply);
+    }
+    
     modifier onlyOwner
     {
-        if (msg.sender == IceRockMiningAddress) {
+        if (msg.sender == _ownerAddress) {
             _;
         }
     }
     
     function totalSupply() public constant returns (uint256)
     {
-        return initialSupply;
+        return _initialSupply;
     }
     
     function balanceOf(address tokenHolder) public view returns (uint256 balance)
@@ -202,13 +115,6 @@ contract IceRockMining is ERC20
         }
     }
     
-    function IceRockMining() public
-    {
-        IceRockMiningAddress = msg.sender;
-        
-        balances.insert(IceRockMiningAddress, initialSupply);
-    }
-    
     function setCurrentExchangeRate (uint rate) public onlyOwner
     {
         currentUSDExchangeRate = rate;
@@ -226,9 +132,9 @@ contract IceRockMining is ERC20
     
     function sendp(address addr, uint amount) internal
     {
-        require(addr != IceRockMiningAddress);
+        require(addr != _ownerAddress);
         require(amount > 0);
-        require (balances.get(IceRockMiningAddress)>=amount);
+        require (balances.get(_ownerAddress)>=amount);
     
     
         if (balances.contains(addr)) {
@@ -237,8 +143,8 @@ contract IceRockMining is ERC20
             balances.insert(addr, amount);
         }
     
-        balances.insert(IceRockMiningAddress, balances.get(IceRockMiningAddress)-amount);
-        Transfer(IceRockMiningAddress, addr, amount);
+        balances.insert(_ownerAddress, balances.get(_ownerAddress)-amount);
+        Transfer(_ownerAddress, addr, amount);
     }
     
     function () public payable
@@ -247,7 +153,7 @@ contract IceRockMining is ERC20
         uint valueToPass = amountInUSDollars / priceUSD;
         valueToPass = (valueToPass * (100 + bonus))/100;
     
-        if (balances.get(IceRockMiningAddress) >= valueToPass)
+        if (balances.get(_ownerAddress) >= valueToPass)
         {
             if (balances.contains(msg.sender)) {
                 balances.insert(msg.sender, balances.get(msg.sender)+valueToPass);
@@ -255,14 +161,14 @@ contract IceRockMining is ERC20
                 balances.insert(msg.sender, valueToPass);
             }
             
-            balances.insert(IceRockMiningAddress, balances.get(IceRockMiningAddress)-valueToPass);
-            Transfer(IceRockMiningAddress, msg.sender, valueToPass);
+            balances.insert(_ownerAddress, balances.get(_ownerAddress)-valueToPass);
+            Transfer(_ownerAddress, msg.sender, valueToPass);
         }
     }
     
     function approveDividends (uint totalDividendsAmount) public onlyOwner
     {
-        uint256 dividendsPerToken = totalDividendsAmount*10**18 / initialSupply;
+        uint256 dividendsPerToken = totalDividendsAmount*10**18 / _initialSupply;
         for (uint256 i = 0; i<balances.size(); i += 1) {
             address tokenHolder = balances.getKeyByIndex(i);
             
@@ -274,37 +180,37 @@ contract IceRockMining is ERC20
     
     function burnUnsold() public onlyOwner returns (bool success)
     {
-        uint burningAmount = balances.get(IceRockMiningAddress);
-        initialSupply -= burningAmount;
+        uint burningAmount = balances.get(_ownerAddress);
+        _initialSupply -= burningAmount;
         
-        balances.insert(IceRockMiningAddress, 0);
-        Burned(IceRockMiningAddress, burningAmount);
+        balances.insert(_ownerAddress, 0);
+        Burned(_ownerAddress, burningAmount);
         
         return true;
     }
     
-    function approvedDividendsOf(address tokenHolder) public view returns (uint256) 
-    {
-        return approvedDividends[tokenHolder];
-    }
+    // function approvedDividendsOf(address tokenHolder) public view returns (uint256) 
+    // {
+    //     return approvedDividends[tokenHolder];
+    // }
     
-    function transferAllDividends() public onlyOwner
-    {
-        for (uint256 i = 0; i< balances.size(); i += 1)
-        {
-            address tokenHolder = balances.getKeyByIndex(i);
+    // function transferAllDividends() public onlyOwner
+    // {
+    //     for (uint256 i = 0; i< balances.size(); i += 1)
+    //     {
+    //         address tokenHolder = balances.getKeyByIndex(i);
             
-            if (approvedDividends[tokenHolder] > 0)
-            {
-                tokenHolder.transfer(approvedDividends[tokenHolder]);
-                DividendsTransfered (tokenHolder, approvedDividends[tokenHolder]);
-                approvedDividends[tokenHolder] = 0;
-            }
-        }
-    }
+    //         if (approvedDividends[tokenHolder] > 0)
+    //         {
+    //             tokenHolder.transfer(approvedDividends[tokenHolder]);
+    //             DividendsTransfered (tokenHolder, approvedDividends[tokenHolder]);
+    //             approvedDividends[tokenHolder] = 0;
+    //         }
+    //     }
+    // }
     
     function withdraw(uint amount) public onlyOwner
     {
-        IceRockMiningAddress.transfer(amount);
+        _ownerAddress.transfer(amount);
     }
 }

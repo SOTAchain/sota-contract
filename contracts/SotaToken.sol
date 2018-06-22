@@ -20,7 +20,7 @@ library SafeMath {
 }
 
 
-contract ERC20 {
+contract ERC201 {
   function totalSupply() public view returns (uint256);
   function balanceOf(address who) public view returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
@@ -35,7 +35,7 @@ contract ERC20 {
 }
 
 
-contract SotaToken is ERC20 {
+contract SotaToken is ERC201 {
   uint256 _totalSupply = 10 * 1000 * 1000 * 1000;
   uint8 public decimals = 3;
 
@@ -51,7 +51,7 @@ contract SotaToken is ERC20 {
   constructor(address ownerAddress) public {
     _ownerAddress = ownerAddress;
 
-    balances.insert(_ownerAddress, _totalSupply);
+    balances[_ownerAddress] = _totalSupply;
   }
 
   function totalSupply() public view returns (uint256)
