@@ -39,8 +39,11 @@ contract SotaToken is ERC20 {
   uint256 _totalSupply = 10 * 1000 * 1000 * 1000;
   uint8 public decimals = 3;
 
-  string public name = "SOTAchain";
-  string public symbol = "SOTA";
+  // Store these in fixed byte arrays to avoid analyzer warnings
+  // TODO: is this compatible?
+
+  bytes9 public name = "SOTAchain";
+  bytes4 public symbol = "SOTA";
 
   address _ownerAddress;
 
