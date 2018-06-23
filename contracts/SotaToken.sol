@@ -64,7 +64,7 @@ contract SotaToken is ERC20 {
   }
 
   mapping (address => mapping (address => uint256)) internal _allowed;
-  // INV_ALLOW: sum(values of `_allowed`) <= `totalSupply`
+  // INV_ALLOW: max(values of `_allowed`) <= `totalSupply`
 
   function transferFrom(address from, address to, uint256 value) public returns (bool)
   {
@@ -87,6 +87,8 @@ contract SotaToken is ERC20 {
 
   function approve(address spender, uint256 value) public returns (bool)
   {
+    require(value <= totalSupply);
+
     _allowed[msg.sender][spender] = value;
 
     emit Approval(msg.sender, spender, value);
