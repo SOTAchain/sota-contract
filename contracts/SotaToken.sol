@@ -17,7 +17,7 @@ contract ERC20 {
 
 
 contract SotaToken is ERC20 {
-  uint256 constant _totalSupply = 10 * 1000 * 1000 * 1000;
+  uint256 _totalSupply = 10 * 1000 * 1000 * 1000;
 
   function totalSupply() public view returns (uint256)
   {
@@ -45,6 +45,9 @@ contract SotaToken is ERC20 {
 
   function transfer(address to, uint256 value) public returns (bool)
   {
+    // address(0) is the value of uninitialized `address` variable
+    require(to != address(0));
+
     require(value <= _balances[msg.sender]); // A1
 
     // Overflow safe from A1
@@ -68,6 +71,8 @@ contract SotaToken is ERC20 {
 
   function transferFrom(address from, address to, uint256 value) public returns (bool)
   {
+    require(to != address(0));
+
     require(value <= _balances[from]); // A1
     require(value <= _allowed[from][msg.sender]); // A2
 
@@ -87,7 +92,7 @@ contract SotaToken is ERC20 {
 
   function approve(address spender, uint256 value) public returns (bool)
   {
-    require(value <= totalSupply);
+    require(value <= _totalSupply);
 
     _allowed[msg.sender][spender] = value;
 
@@ -96,8 +101,7 @@ contract SotaToken is ERC20 {
     return true;
   }
 
-  function allowance(address holder, address spender)
-           public view returns (uint256)
+  function allowance(address holder, address spender) public view returns (uint256)
   {
     return _allowed[holder][spender];
   }

@@ -4,10 +4,11 @@ import "./SotaToken.sol";
 
 contract SotaTokenMock is SotaToken {
 
-  constructor(address ownerAddress) public {
+  constructor(address ownerAddress, uint256 totalSupply) public {
     _ownerAddress = ownerAddress;
+    _totalSupply = totalSupply;
 
-    balances[_ownerAddress] = _totalSupply;
+    _balances[_ownerAddress] = _totalSupply;
   }
 
 }
