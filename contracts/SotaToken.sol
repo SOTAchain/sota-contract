@@ -1,18 +1,6 @@
 pragma solidity ^0.4.24;
 
 
-library SafeMath {
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c)
-  {
-    c = a + b;
-
-    require(c >= a);
-
-    return c;
-  }
-}
-
-
 contract ERC20 {
   function totalSupply() public view returns (uint256);
   function balanceOf(address who) public view returns (uint256);
@@ -29,7 +17,13 @@ contract ERC20 {
 
 
 contract SotaToken is ERC20 {
-  uint256 _totalSupply = 10 * 1000 * 1000 * 1000;
+  uint256 constant _totalSupply = 10 * 1000 * 1000 * 1000;
+
+  function totalSupply() public view returns (uint256)
+  {
+    return _totalSupply;
+  }
+
   uint8 public decimals = 3;
 
   // Store these in fixed byte arrays to avoid analyzer warnings
@@ -40,55 +34,51 @@ contract SotaToken is ERC20 {
 
   address _ownerAddress;
 
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
+  mapping(address => uint256) _balances;
+  // INV_BAL: sum(values of `_balances`) = `_totalSupply`
 
   constructor() public {
     _ownerAddress = msg.sender;
 
-    balances[_ownerAddress] = _totalSupply;
-  }
-
-  function totalSupply() public view returns (uint256)
-  {
-    return _totalSupply;
+    _balances[_ownerAddress] = _totalSupply;
   }
 
   function transfer(address _to, uint256 _value) public returns (bool)
   {
-    require(_value <= balances[msg.sender]);
+    require(_value <= _balances[msg.sender]); // A1
 
-    // No overflow because of asserion
-    balances[msg.sender] = balances[msg.sender] - _value;
+    // Overflow safe from A1
+    _balances[msg.sender] = _balances[msg.sender] - _value;
 
-    balances[_to] = balances[_to].add(_value);
+    // Overflow safe from A1 & INV_BAL
+    _balances[_to] = _balances[_to] + _value;
     
     emit Transfer(msg.sender, _to, _value);
 
     return true;
   }
 
-  function balanceOf(address _owner) public view returns (uint256)
+  function balanceOf(address _holder) public view returns (uint256)
   {
-    return balances[_owner];
+    return _balances[_holder];
   }
 
-  mapping (address => mapping (address => uint256)) internal allowed;
+  mapping (address => mapping (address => uint256)) internal _allowed;
+  // INV_ALLOW: sum(values of `_allowed`) <= `_totalSupply`
 
-  function transferFrom(address _from, address _to, uint256 _value)
-           public returns (bool)
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool)
   {
-    require(_value <= balances[_from]); // A
-    require(_value <= allowed[_from][msg.sender]); // B
+    require(_value <= _balances[_from]); // A1
+    require(_value <= _allowed[_from][msg.sender]); // A2
 
-    // No overflow because of assertion A
-    balances[_from] = balances[_from] - _value;
+    // Overflow safe from A1
+    _balances[_from] = _balances[_from] - _value;
 
-    balances[_to] = balances[_to].add(_value);
+    // Overflow safe from (A1 | A2) & INV_ALLOW
+    _balances[_to] = _balances[_to] + _value;
 
-    // No overflow becayse of assertion B
-    allowed[_from][msg.sender] = allowed[_from][msg.sender] - _value;
+    // Overflow safe from A2
+    _allowed[_from][msg.sender] = _allowed[_from][msg.sender] - _value;
 
     emit Transfer(_from, _to, _value);
 
@@ -97,16 +87,17 @@ contract SotaToken is ERC20 {
 
   function approve(address _spender, uint256 _value) public returns (bool)
   {
-    allowed[msg.sender][_spender] = _value;
+    _allowed[msg.sender][_spender] = _value;
+
     emit Approval(msg.sender, _spender, _value);
 
     return true;
   }
 
-  function allowance(address _owner, address _spender)
+  function allowance(address _holder, address _spender)
            public view returns (uint256)
   {
-    return allowed[_owner][_spender];
+    return _allowed[_holder][_spender];
   }
 
   /*
