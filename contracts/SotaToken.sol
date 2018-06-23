@@ -27,8 +27,7 @@ contract SotaToken is ERC20 {
   uint8 public decimals = 3;
 
   // Store these in fixed byte arrays to avoid analyzer warnings
-  // TODO: is this compatible?
-
+  // This is compatible with etherscan
   bytes9 public name = "SOTAchain";
   bytes4 public symbol = "SOTA";
 
