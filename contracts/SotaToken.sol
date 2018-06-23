@@ -43,61 +43,61 @@ contract SotaToken is ERC20 {
     _balances[_ownerAddress] = _totalSupply;
   }
 
-  function transfer(address _to, uint256 _value) public returns (bool)
+  function transfer(address to, uint256 value) public returns (bool)
   {
-    require(_value <= _balances[msg.sender]); // A1
+    require(value <= _balances[msg.sender]); // A1
 
     // Overflow safe from A1
-    _balances[msg.sender] = _balances[msg.sender] - _value;
+    _balances[msg.sender] = _balances[msg.sender] - value;
 
     // Overflow safe from A1 & INV_BAL
-    _balances[_to] = _balances[_to] + _value;
+    _balances[to] = _balances[to] + value;
     
-    emit Transfer(msg.sender, _to, _value);
+    emit Transfer(msg.sender, to, value);
 
     return true;
   }
 
-  function balanceOf(address _holder) public view returns (uint256)
+  function balanceOf(address holder) public view returns (uint256)
   {
-    return _balances[_holder];
+    return _balances[holder];
   }
 
   mapping (address => mapping (address => uint256)) internal _allowed;
-  // INV_ALLOW: sum(values of `_allowed`) <= `_totalSupply`
+  // INV_ALLOW: sum(values of `_allowed`) <= `totalSupply`
 
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool)
+  function transferFrom(address from, address to, uint256 value) public returns (bool)
   {
-    require(_value <= _balances[_from]); // A1
-    require(_value <= _allowed[_from][msg.sender]); // A2
+    require(value <= _balances[from]); // A1
+    require(value <= _allowed[from][msg.sender]); // A2
 
     // Overflow safe from A1
-    _balances[_from] = _balances[_from] - _value;
+    _balances[from] = _balances[from] - value;
 
     // Overflow safe from (A1 | A2) & INV_ALLOW
-    _balances[_to] = _balances[_to] + _value;
+    _balances[to] = _balances[to] + value;
 
     // Overflow safe from A2
-    _allowed[_from][msg.sender] = _allowed[_from][msg.sender] - _value;
+    _allowed[from][msg.sender] = _allowed[from][msg.sender] - value;
 
-    emit Transfer(_from, _to, _value);
+    emit Transfer(from, to, value);
 
     return true;
   }
 
-  function approve(address _spender, uint256 _value) public returns (bool)
+  function approve(address spender, uint256 value) public returns (bool)
   {
-    _allowed[msg.sender][_spender] = _value;
+    _allowed[msg.sender][spender] = value;
 
-    emit Approval(msg.sender, _spender, _value);
+    emit Approval(msg.sender, spender, value);
 
     return true;
   }
 
-  function allowance(address _holder, address _spender)
+  function allowance(address holder, address spender)
            public view returns (uint256)
   {
-    return _allowed[_holder][_spender];
+    return _allowed[holder][spender];
   }
 
   /*
