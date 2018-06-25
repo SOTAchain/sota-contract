@@ -26,7 +26,7 @@ contract SotaToken is ERC20 {
 
   uint8 public decimals = 3;
 
-  // Store these in fixed byte arrays to avoid analyzer warnings
+  // Store these in fixed byte arrays to avoid Remix analyzer warnings
   // This is compatible with etherscan
   bytes9 public name = "SOTAchain";
   bytes4 public symbol = "SOTA";
@@ -104,8 +104,4 @@ contract SotaToken is ERC20 {
   {
     return _allowed[holder][spender];
   }
-
-  /*
-   * TODO: implement dividends
-   */
 }
